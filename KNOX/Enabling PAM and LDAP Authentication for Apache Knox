@@ -1,0 +1,83 @@
+# Enabling PAM and LDAP Authentication for Apache Knox
+
+**Summary**
+
+This article explains how to configure Apache Knox to authenticate users using both Pluggable Authentication Modules (PAM) and Lightweight Directory Access Protocol (LDAP) simultaneously. By default, Knox utilizes PAM authentication. This guide provides the steps to add LDAP authentication without disabling the existing PAM setup, allowing users to authenticate via either method.
+
+**Applies To**
+
+* Apache Knox
+* Cloudera Manager (CM) (if applicable)
+
+**Instructions**
+
+1.  **Review the Current Authentication Setup:**
+    * By default, Apache Knox is configured to use PAM authentication.
+    * The objective is to enable LDAP authentication alongside PAM, allowing Knox to validate user credentials using either authentication mechanism.
+    * Note that the lines `authentication.param.remove=main.pamRealm` and `authentication.param.remove=main.pamRealm.service` should **not** be used in this configuration, since we are keeping PAM.
+
+2.  **Navigate to Configuration Settings:**
+    * Access the Cloudera Manager (CM) web interface (if used).
+    * Navigate to **Knox** > **Configuration** > **Knox Simplified Topology Management** under the **SSO Authentication Provider** section.
+
+3.  **Add Required Configuration for Both PAM and LDAP:**
+    * In the **SSO Authentication Provider** settings, add or modify the following configuration parameter:
+        ```
+        authentication.param.main.securityManager.realms=$pamRealm,$ldapRealm
+        ```
+        * This line specifies that both `pamRealm` and `ldapRealm` will be used for authentication.
+
+4.  **Add Detailed Authentication Configuration:**
+    * Add the following configuration parameters to define the properties for both PAM and LDAP realms:
+        ```
+        role=authentication
+        authentication.name=ShiroProvider
+        authentication.param.sessionTimeout=30
+        authentication.param.redirectToUrl=/${GATEWAY_PATH}/knoxsso/knoxauth/login.html
+        authentication.param.restrictedCookies=rememberme,WWW-Authenticate
+        authentication.param.main.pamRealm=org.apache.knox.gateway.shirorealm.KnoxPamRealm
+        authentication.param.main.pamRealm.service=login
+        authentication.param.urls./**=authcBasic
+        authentication.param.main.ldapRealm=org.apache.knox.gateway.shirorealm.KnoxLdapRealm
+        authentication.param.main.ldapContextFactory=org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory
+        authentication.param.main.ldapRealm.contextFactory=$ldapContextFactory
+        authentication.param.main.securityManager.realms=$pamRealm,$ldapRealm
+        authentication.param.main.ldapRealm.contextFactory.authenticationMechanism=simple
+        authentication.param.main.ldapRealm.contextFactory.url=ldap://#.#.#.#:389
+        authentication.param.main.ldapRealm.contextFactory.systemUsername=testuser@CLOUDERA.COM
+        authentication.param.main.ldapRealm.contextFactory.systemPassword=xxxxxxx
+        authentication.param.main.ldapRealm.userDnTemplate=CN={0},ou=****,ou=****,ou=****,dc=****,dc=****
+        ```
+        * **Important:**
+            * Replace `#.#.#.#:389` with the actual IP address and port of your LDAP server.
+            * Replace `testuser@CLOUDERA.COM` and `xxxxxxx` with the LDAP service account username and password.
+            * Replace `CN={0},ou=****,ou=****,ou=****,dc=****,dc=****` with the correct LDAP user DN template for your environment. `{0}` will be replaced with the username.
+            * Replace `****` with your specific domain components.
+
+5.  **Save the Configuration:**
+    * Save the changes made to the Knox configuration.
+
+6.  **Restart Knox Service:**
+    * Restart the Knox service to apply the new configuration. In Cloudera Manager, you can do this from the Knox service page.
+
+7.  **Verify Login with Both PAM and LDAP Users:**
+    * After the restart, test the authentication by attempting to log in with both a PAM user (e.g., "ABC") and an LDAP user (e.g., "DEF").
+    * Knox should attempt authentication using both PAM and LDAP, granting access if either method succeeds.
+
+8.  **Check the Logs for Authentication Success:**
+    * Monitor the Knox gateway logs for authentication events.
+    * Look for log entries that confirm successful authentication for both PAM and LDAP users.
+    * Example Log analysis:
+        * The logs provided in your example, show attempts by user ABC to login via LDAP, which failed, then successful login via PAM.
+        * Then the logs show user DEF attempting to login via PAM, which failed, then a successful login via LDAP.
+        * This shows the system properly trying both methods.
+        * Look for lines containing `KnoxPamRealm` and `KnoxLdapRealm` to identify the authentication methods used.
+        * Successful login will generally be shown by the absense of error messages, and the presence of messages showing role/group calculation, and cookie creation.
+
+**Troubleshooting**
+
+* If LDAP authentication fails, verify the LDAP server address, port, service account credentials, and user DN template.
+* If PAM authentication fails, verify the PAM configuration on the Knox server.
+* Check the Knox gateway logs for specific error messages to diagnose authentication issues.
+* Ensure that the LDAP server is reachable from the Knox server.
+* Ensure the LDAP user accounts have the correct permissions.
