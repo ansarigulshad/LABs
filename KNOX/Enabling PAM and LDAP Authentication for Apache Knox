@@ -22,37 +22,41 @@ This article explains how to configure Apache Knox to authenticate users using b
 
 3.  **Add Required Configuration for Both PAM and LDAP:**
     * In the **SSO Authentication Provider** settings, add or modify the following configuration parameter:
-        ```
-        authentication.param.main.securityManager.realms=$pamRealm,$ldapRealm
-        ```
-        * This line specifies that both `pamRealm` and `ldapRealm` will be used for authentication.
+
+    ```
+    authentication.param.main.securityManager.realms=$pamRealm,$ldapRealm
+    ```
+
+    * This line specifies that both `pamRealm` and `ldapRealm` will be used for authentication.
 
 4.  **Add Detailed Authentication Configuration:**
     * Add the following configuration parameters to define the properties for both PAM and LDAP realms:
-        ```
-        role=authentication
-        authentication.name=ShiroProvider
-        authentication.param.sessionTimeout=30
-        authentication.param.redirectToUrl=/${GATEWAY_PATH}/knoxsso/knoxauth/login.html
-        authentication.param.restrictedCookies=rememberme,WWW-Authenticate
-        authentication.param.main.pamRealm=org.apache.knox.gateway.shirorealm.KnoxPamRealm
-        authentication.param.main.pamRealm.service=login
-        authentication.param.urls./**=authcBasic
-        authentication.param.main.ldapRealm=org.apache.knox.gateway.shirorealm.KnoxLdapRealm
-        authentication.param.main.ldapContextFactory=org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory
-        authentication.param.main.ldapRealm.contextFactory=$ldapContextFactory
-        authentication.param.main.securityManager.realms=$pamRealm,$ldapRealm
-        authentication.param.main.ldapRealm.contextFactory.authenticationMechanism=simple
-        authentication.param.main.ldapRealm.contextFactory.url=ldap://#.#.#.#:389
-        authentication.param.main.ldapRealm.contextFactory.systemUsername=testuser@CLOUDERA.COM
-        authentication.param.main.ldapRealm.contextFactory.systemPassword=xxxxxxx
-        authentication.param.main.ldapRealm.userDnTemplate=CN={0},ou=****,ou=****,ou=****,dc=****,dc=****
-        ```
-        * **Important:**
-            * Replace `#.#.#.#:389` with the actual IP address and port of your LDAP server.
-            * Replace `testuser@CLOUDERA.COM` and `xxxxxxx` with the LDAP service account username and password.
-            * Replace `CN={0},ou=****,ou=****,ou=****,dc=****,dc=****` with the correct LDAP user DN template for your environment. `{0}` will be replaced with the username.
-            * Replace `****` with your specific domain components.
+
+    ```
+    role=authentication
+    authentication.name=ShiroProvider
+    authentication.param.sessionTimeout=30
+    authentication.param.redirectToUrl=/${GATEWAY_PATH}/knoxsso/knoxauth/login.html
+    authentication.param.restrictedCookies=rememberme,WWW-Authenticate
+    authentication.param.main.pamRealm=org.apache.knox.gateway.shirorealm.KnoxPamRealm
+    authentication.param.main.pamRealm.service=login
+    authentication.param.urls./**=authcBasic
+    authentication.param.main.ldapRealm=org.apache.knox.gateway.shirorealm.KnoxLdapRealm
+    authentication.param.main.ldapContextFactory=org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory
+    authentication.param.main.ldapRealm.contextFactory=$ldapContextFactory
+    authentication.param.main.securityManager.realms=$pamRealm,$ldapRealm
+    authentication.param.main.ldapRealm.contextFactory.authenticationMechanism=simple
+    authentication.param.main.ldapRealm.contextFactory.url=ldap://#.#.#.#:389
+    authentication.param.main.ldapRealm.contextFactory.systemUsername=testuser@CLOUDERA.COM
+    authentication.param.main.ldapRealm.contextFactory.systemPassword=xxxxxxx
+    authentication.param.main.ldapRealm.userDnTemplate=CN={0},ou=****,ou=****,ou=****,dc=****,dc=****
+    ```
+
+    * **Important:**
+        * Replace `#.#.#.#:389` with the actual IP address and port of your LDAP server.
+        * Replace `testuser@CLOUDERA.COM` and `xxxxxxx` with the LDAP service account username and password.
+        * Replace `CN={0},ou=****,ou=****,ou=****,dc=****,dc=****` with the correct LDAP user DN template for your environment. `{0}` will be replaced with the username.
+        * Replace `****` with your specific domain components.
 
 5.  **Save the Configuration:**
     * Save the changes made to the Knox configuration.
